@@ -29,7 +29,7 @@ public class CDBChunkSections extends ChunkDataBlock
 	public void copyData(Level world, ChunkPos chunkPos)
 	{
 		ChunkSectionData.clear();
-		ChunkAccess chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
+		ChunkAccess chunk = world.getChunk(chunkPos.x(), chunkPos.z());
 		LevelChunkSection[] sections = chunk.getSections();
 		for (int i = 0; i < sections.length; i++)
 		{
@@ -43,7 +43,7 @@ public class CDBChunkSections extends ChunkDataBlock
 	@Override
 	public void pasteData(ServerLevel world, ChunkPos chunkPos)
 	{
-		ChunkAccess chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
+		ChunkAccess chunk = world.getChunk(chunkPos.x(), chunkPos.z());
 		for (Tuple<Integer, FriendlyByteBuf> pbb : ChunkSectionData)
 		{
 			LevelChunkSection cs = chunk.getSection(chunk.getSectionIndex(pbb.Item1));
@@ -76,7 +76,7 @@ public class CDBChunkSections extends ChunkDataBlock
 	public void writeData(OutputStream stream) throws IOException
 	{
 		for (Tuple<Integer, FriendlyByteBuf> pbb : ChunkSectionData)
-		{
+	{
 			ByteArrayOutputStream pbbStream = new ByteArrayOutputStream();
 			byte[] pbbCsBytes = new byte[pbb.Item2.readableBytes()];
 			pbb.Item2.getBytes(pbb.Item2.readerIndex(), pbbCsBytes);
