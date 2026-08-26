@@ -23,9 +23,9 @@ public final class ChunkCopyUtils
 		else if(chunkDistance > 1)
 		{
 			chunkDistance--;
-			for(int chunkX = chunkPos.x - chunkDistance; chunkX < chunkPos.x + chunkDistance; chunkX++)
+			for(int chunkX = chunkPos.getX() - chunkDistance; chunkX < chunkPos.getX() + chunkDistance; chunkX++)
 			{
-				for(int chunkZ = chunkPos.z - chunkDistance; chunkZ < chunkPos.z + chunkDistance; chunkZ++)
+				for(int chunkZ = chunkPos.getZ() - chunkDistance; chunkZ < chunkPos.getZ() + chunkDistance; chunkZ++)
 				{
 					if(!world.hasChunk(chunkX, chunkZ)) continue;
 					LevelChunk chunk = world.getChunk(chunkX, chunkZ);
@@ -39,19 +39,17 @@ public final class ChunkCopyUtils
 
 	public static AABB getChunkBox(Level world, ChunkPos chunkPos)
 	{
-		ChunkAccess chunk = world.getChunk(chunkPos.getBlockAt(0, 0, 0));
-		int chunkWidthX = Math.abs(chunkPos.getMaxBlockX() - chunkPos.getMinBlockX());
-		int chunkWidthZ = Math.abs(chunkPos.getMaxBlockZ() - chunkPos.getMinBlockZ());
+		ChunkAccess chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
 		return new AABB(
-				chunkPos.getBlockAt(0, chunk.getMinY(), 0),
-				chunkPos.getBlockAt(chunkWidthX, chunk.getMaxY(), chunkWidthZ));
+				chunkPos.getMinBlockX(), chunk.getMinY(), chunkPos.getMinBlockZ(),
+				chunkPos.getMaxBlockX() + 1, chunk.getMaxY() + 1, chunkPos.getMaxBlockZ() + 1);
 	}
 
 	public static ArrayList<Entity> getEntitiesInChunk(Level world, ChunkPos chunkPos)
 	{
 		ArrayList<Entity> result = new ArrayList<>();
 		AABB chunkBox = getChunkBox(world, chunkPos);
-		result.addAll(world.getEntities(null, chunkBox, e ->
+		result.addAll(world.getEntities((Entity)null, chunkBox, e ->
 			!(e instanceof Player) && !(e instanceof EnderDragon)
 		));
 		return result;
