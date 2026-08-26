@@ -43,7 +43,7 @@ public abstract class ChunkCopy
 			if(!AutoChunkCopy.isPasting()) return;
 			final ChunkPos scPos = sChunk.getPos();
 			final Runnable task = () -> { try { ChunkCopyAPI.loadChunkDataIO(sWorld, scPos, AutoChunkCopy.getFileName()); } catch(Exception exc) {} };
-			new Thread(() -> { try { Thread.sleep(500); while(!sWorld.hasChunk(scPos.getX(), scPos.getZ())) Thread.sleep(100); task.run(); } catch(Exception e) {} }).start();
+			new Thread(() -> { try { Thread.sleep(500); while(!sWorld.hasChunk(scPos.x(), scPos.z())) Thread.sleep(100); task.run(); } catch(Exception e) {} }).start();
 		});
 	}
 
