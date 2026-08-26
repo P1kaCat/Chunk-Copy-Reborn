@@ -3,6 +3,8 @@ package thecsdev.chunkcopy.api;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
@@ -72,6 +74,77 @@ public final class ChunkCopyAPI
 		byte[] chunkData = FileUtils.readFileToByteArray(file);
 		pasteChunkData(chunkData, world, chunkPos, true);
 		return true;
+	}
+
+	/**
+	 * Recursively lists all saved chunk files (.bin) under the given directory.
+	 */
+	private static List<File> listChunkFiles(File dir)
+	{
+		List<File> files = new ArrayList<>();
+		File[] children = dir.listFiles();
+		if(children == null) return files;
+		for (File child : children)
+		{
+			if(child.isDirectory()) files.addAll(listChunkFiles(child));
+			else if(child.getName().endsWith(FILE_EXTENSION)) files.add(child);
+		}
+		return files;
+	}
+
+	/**
+	 * Returns all saved chunk positions for a given fileName, scanning
+	 * across all dimensions/subdirectories.
+	 */
+	public static List<ChunkPos> getAllSavedChunkPositions(String fileName)
+	{
+		List<ChunkPos> positions = new ArrayList<>();
+		File saveDir = getSaveFileDirectory(fileName);
+		if(!saveDir.exists()) return positions;
+		for (File chunkFile : listChunkFiles(saveDir))
+		{
+			String name = chunkFile.getName().replace(FILE_EXTENSION, "");
+			String[] parts = name.split("_");
+			if(parts.length != 2) continue;
+			try
+			{
+				int x = Integer.parseInt(parts[0]);
+				int z = Integer.parseInt(parts[1]);
+				positions.add(new ChunkPos(x, z));
+			}
+			catch(NumberFormatException e) {}
+		}
+		return positions;
+	}
+
+	/**
+	 * Pastes ALL saved chunks from the given fileName into the target world at once.
+	 * Each chunk file is read directly and pasted into the world, regardless of
+	 * which dimension the chunks were originally saved from.
+	 * @return The number of chunks successfully pasted.
+	 */
+	public static int pasteAllChunks(ServerLevel world, String fileName) throws IOException
+	{
+		File saveDir = getSaveFileDirectory(fileName);
+		if(!saveDir.exists()) return 0;
+		int count = 0;
+		for (File chunkFile : listChunkFiles(saveDir))
+		{
+			String name = chunkFile.getName().replace(FILE_EXTENSION, "");
+			String[] parts = name.split("_");
+			if(parts.length != 2) continue;
+			try
+			{
+				int x = Integer.parseInt(parts[0]);
+				int z = Integer.parseInt(parts[1]);
+				ChunkPos chunkPos = new ChunkPos(x, z);
+				byte[] chunkData = FileUtils.readFileToByteArray(chunkFile);
+				pasteChunkData(chunkData, world, chunkPos, true);
+				count++;
+			}
+			catch(Exception e) {}
+		}
+		return count;
 	}
 
 	public static byte[] copyChunkData(Level world, ChunkPos chunkPos, boolean useCompression) throws IOException

@@ -54,6 +54,19 @@ public final class ChunkCopyServerCommand extends ChunkCopyCommand<CommandSource
 		} catch (Exception e) { handleException(commandSource, e); }
 	}
 
+	@Override protected void pasteAll(CommandSourceStack commandSource, String fileName)
+	{
+		if(!ChunkCopyAPI.getSaveFileDirectory(fileName).exists())
+		{ commandSource.sendSuccess(() -> Component.literal(String.format("[Chunk Copy] Unable to paste chunks from '%s', file not found.", fileName)), true); return; }
+		try {
+			ServerLevel world = commandSource.getLevel();
+			int affectedChunks = ChunkCopyAPI.pasteAllChunks(world, fileName);
+			final int finalCount = affectedChunks;
+			final String msg = String.format("[Chunk Copy] Pasted %d chunks from '%s'.", finalCount, fileName);
+			commandSource.sendSuccess(() -> Component.literal(msg), true);
+		} catch (Exception e) { handleException(commandSource, e); }
+	}
+
 	@Override protected void fill(CommandSourceStack commandSource, int chunkDistance, BlockState block)
 	{
 		try {

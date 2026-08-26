@@ -58,6 +58,19 @@ public final class ChunkCopyClientCommand extends ChunkCopyCommand<FabricClientC
 		if(sendFeedback) commandSource.sendFeedback(Component.translatable("chunkcopy.feedback.pasted", affectedChunks, fileName));
 	}
 
+	@Override protected void pasteAll(FabricClientCommandSource commandSource, String fileName)
+	{
+		Minecraft mc = Minecraft.getInstance();
+		if(!requireSingleplayer(commandSource)) return;
+		if(!ChunkCopyAPI.getSaveFileDirectory(fileName).exists())
+		{ commandSource.sendFeedback(Component.translatable("chunkcopy.feedback.paste_file_not_found", new Object[] { fileName })); return; }
+		ServerLevel world = mc.getSingleplayerServer().getLevel(mc.level.dimension());
+		int affectedChunks = 0;
+		try { affectedChunks = ChunkCopyAPI.pasteAllChunks(world, fileName); }
+		catch (Exception e) { handleException(commandSource, e); return; }
+		commandSource.sendFeedback(Component.translatable("chunkcopy.feedback.pasted_all", affectedChunks, fileName));
+	}
+
 	@Override protected void fill(FabricClientCommandSource commandSource, int chunkDistance, BlockState block)
 	{
 		Minecraft mc = Minecraft.getInstance();

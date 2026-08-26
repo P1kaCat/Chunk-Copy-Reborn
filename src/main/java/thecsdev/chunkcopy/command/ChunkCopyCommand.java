@@ -59,6 +59,10 @@ public abstract class ChunkCopyCommand<CS extends SharedSuggestionProvider>
 					.requires(arg -> canPaste(arg))
 					.then(argument("fileName", CopiedChunksArgumentType.forPasting())
 						.executes(arg -> exec_autoChunkCopy_start_fileName(arg, ACCMode.Pasting))))
+				.then(literal("pasteall")
+					.requires(arg -> canPaste(arg))
+					.then(argument("fileName", CopiedChunksArgumentType.forPasting())
+						.executes(arg -> exec_pasteAll_fileName(arg))))
 				.then(literal("stop")
 					.executes(arg -> exec_autoChunkCopy_stop(arg))));
 
@@ -74,6 +78,7 @@ public abstract class ChunkCopyCommand<CS extends SharedSuggestionProvider>
 	private int exec_clear_chunkDistance(CommandContext<CS> cs) { fill(cs.getSource(), cs.getArgument("chunkDistance", Integer.class), Blocks.AIR.defaultBlockState()); return 1; }
 	private int exec_autoChunkCopy_start_fileName(CommandContext<CS> cs, ACCMode accMode) { autoChunkCopyStart(cs.getSource(), cs.getArgument("fileName", String.class), accMode); return 1; }
 	private int exec_autoChunkCopy_stop(CommandContext<CS> cs) { autoChunkCopyStop(cs.getSource()); return 1; }
+	private int exec_pasteAll_fileName(CommandContext<CS> cs) { pasteAll(cs.getSource(), cs.getArgument("fileName", String.class)); return 1; }
 
 	public abstract String getCommandName();
 	protected abstract boolean canChunkCopy(CS commandSource);
@@ -88,6 +93,7 @@ public abstract class ChunkCopyCommand<CS extends SharedSuggestionProvider>
 	protected final void clear(CS commandSource, int chunkDistance) { fill(commandSource, chunkDistance, Blocks.AIR.defaultBlockState()); }
 	protected abstract void autoChunkCopyStart(CS commandSource, String fileName, ACCMode accMode);
 	protected abstract void autoChunkCopyStop(CS commandSource);
+	protected abstract void pasteAll(CS commandSource, String fileName);
 	public LiteralArgumentBuilder<CS> literal(String name) { return LiteralArgumentBuilder.literal(name); }
 	public <ARG> RequiredArgumentBuilder<CS, ARG> argument(String name, ArgumentType<ARG> type) { return RequiredArgumentBuilder.argument(name, type); }
 	protected static String getExceptionMessage(Throwable e)
