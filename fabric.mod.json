@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "chunkcopy",
-	"version": "${version}",
+	"version": "2.4",
 
 	"name": "Chunk Copy",
 	"description": "A Minecraft mod that copies worlds from multiplayer servers.",
