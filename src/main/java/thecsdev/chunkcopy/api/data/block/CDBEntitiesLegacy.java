@@ -6,11 +6,10 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Optional;
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntitySpawnRequest;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -50,16 +49,14 @@ public class CDBEntitiesLegacy extends ChunkDataBlock
 	public void pasteData(ServerLevel world, ChunkPos chunkPos)
 	{
 		for (Entity entity : ChunkCopyUtils.getEntitiesInChunk(world, chunkPos))
-		{
-			if(!(entity instanceof Player))
-				entity.discard();
-		}
+			if(!(entity instanceof Player)) entity.discard();
+
 		for (CompoundTag eNbt : EntityNBTs)
 			try
 			{
 				Optional<Entity> optEntity = EntityType.create(
 					TagValueInput.create(ProblemReporter.DISCARDING, world.registryAccess(), eNbt),
-					world, EntitySpawnReason.LOAD);
+					world, new EntitySpawnRequest(EntitySpawnReason.LOAD, false));
 				if(optEntity.isEmpty()) continue;
 				Entity entity = optEntity.get();
 				Entity oldEntity = world.getEntity(entity.getUUID());
@@ -77,14 +74,10 @@ public class CDBEntitiesLegacy extends ChunkDataBlock
 	{
 		EntityNBTs.clear();
 		while(stream.available() > 0)
-			try
-			{
-				String nbtString = IOUtils.readString(stream);
-				CompoundTag eNbt = TagParser.FLATTENED_CODEC.decode(nbtString).getOrThrow();
-				EntityNBTs.add(eNbt);
-			}
-			catch (CommandSyntaxException e) { throw new IOException("Invalid or corrupted Entity NBT data."); }
-			catch (Exception e) { break; }
+		{
+			try { EntityNBTs.add(TagParser.parseCompoundFully(IOUtils.readString(stream))); }
+			catch (Exception e) { throw new IOException("Invalid or corrupted Entity NBT data.", e); }
+		}
 	}
 
 	@Override
