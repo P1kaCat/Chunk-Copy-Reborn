@@ -15,8 +15,8 @@ import thecsdev.chunkcopy.api.ChunkCopyAPI;
 @Mixin(targets = "net/minecraft/client/multiplayer/ClientChunkCache$Storage")
 public abstract class ClientChunkMapMixin
 {
-	@Inject(method = "set", at = @At("TAIL"))
-	protected void set(int index, @Nullable LevelChunk chunk, CallbackInfo callback)
+	@Inject(method = "replace", at = @At("TAIL"))
+	protected void replace(int index, @Nullable LevelChunk chunk, CallbackInfo callback)
 	{
 		if(!AutoChunkCopy.isRunning()) return;
 		if(chunk == null) return;
