@@ -24,7 +24,7 @@ public class CDBFillBlocks extends ChunkDataBlock
 	@Override public void copyData(Level world, ChunkPos chunkPos) {}
 	@Override public void pasteData(ServerLevel world, ChunkPos chunkPos)
 	{
-		LevelChunk chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
+		LevelChunk chunk = world.getChunk(chunkPos.x(), chunkPos.z());
 		int chunkWidthX = Math.abs(chunkPos.getMaxBlockX() - chunkPos.getMinBlockX()); int chunkWidthZ = Math.abs(chunkPos.getMaxBlockZ() - chunkPos.getMinBlockZ());
 		int x = 0, y = chunk.getMinY(), z = 0;
 		while(y < chunk.getMaxY() + 1)
