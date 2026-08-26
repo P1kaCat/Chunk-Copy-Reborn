@@ -23,9 +23,9 @@ public final class ChunkCopyUtils
 		else if(chunkDistance > 1)
 		{
 			chunkDistance--;
-			for(int chunkX = chunkPos.getX() - chunkDistance; chunkX < chunkPos.getX() + chunkDistance; chunkX++)
+			for(int chunkX = chunkPos.x() - chunkDistance; chunkX < chunkPos.x() + chunkDistance; chunkX++)
 			{
-				for(int chunkZ = chunkPos.getZ() - chunkDistance; chunkZ < chunkPos.getZ() + chunkDistance; chunkZ++)
+				for(int chunkZ = chunkPos.z() - chunkDistance; chunkZ < chunkPos.z() + chunkDistance; chunkZ++)
 				{
 					if(!world.hasChunk(chunkX, chunkZ)) continue;
 					LevelChunk chunk = world.getChunk(chunkX, chunkZ);
@@ -39,7 +39,7 @@ public final class ChunkCopyUtils
 
 	public static AABB getChunkBox(Level world, ChunkPos chunkPos)
 	{
-		ChunkAccess chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
+		ChunkAccess chunk = world.getChunk(chunkPos.x(), chunkPos.z());
 		return new AABB(
 				chunkPos.getMinBlockX(), chunk.getMinY(), chunkPos.getMinBlockZ(),
 				chunkPos.getMaxBlockX() + 1, chunk.getMaxY() + 1, chunkPos.getMaxBlockZ() + 1);
