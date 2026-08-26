@@ -9,8 +9,8 @@
 	"contact":
 	{
 		"homepage": "https://github.com/TheCSDev",
-		"sources": "https://github.com/TheCSDev/mc-chunk-copy",
-		"issues": "https://github.com/TheCSDev/mc-chunk-copy/issues"
+		"sources": "https://github.com/P1kaCat/Chunk-Copy-Reborn",
+		"issues": "https://github.com/P1kaCat/Chunk-Copy-Reborn/issues"
 	},
 
 	"license": "LGPL-3.0-or-later",
@@ -20,19 +20,15 @@
 	"entrypoints":
 	{
 		"client": ["thecsdev.chunkcopy.client.ChunkCopyClient"],
-		"server": []
+		"server": ["thecsdev.chunkcopy.server.ChunkCopyServer"]
 	},
 	"mixins": ["chunkcopy.mixins.json", "chunkcopy.client.mixins.json"],
 
 	"depends":
 	{
-		"fabricloader": ">=0.14.6",
+		"fabricloader": ">=0.16.10",
 		"fabric": "*",
-		"minecraft": "1.19.x",
-		"java": ">=17"
-	},
-	"suggests":
-	{
-		"another-mod": "*"
+		"minecraft": ">=1.21.10 <1.21.11",
+		"java": ">=21"
 	}
 }
