@@ -5,24 +5,16 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import thecsdev.chunkcopy.api.AutoChunkCopy;
 
-@Mixin(MinecraftClient.class)
+@Mixin(Minecraft.class)
 public abstract class MinecraftClientMixin
 {
-	// ==================================================
-	//@Accessor("currentScreen") public abstract Screen getCurrentScreen();
-	//@Accessor("isConnectedToServer") public abstract boolean isConnectedToServer();
-	// --------------------------------------------------
-	/**
-	 * Stop {@link AutoChunkCopy} when disconnecting.
-	 */
-	@Inject(method = "disconnect(Lnet/minecraft/client/gui/screen/Screen;)V", at = @At("RETURN"))
-	public void disconnect(Screen screen, CallbackInfo callback)
+	@Inject(method = "disconnect(Lnet/minecraft/client/gui/screens/Screen;Z)V", at = @At("RETURN"))
+	public void onDisconnect(Screen screen, boolean keepResourcePacks, CallbackInfo callback)
 	{
 		AutoChunkCopy.stop();
 	}
-	// ==================================================
 }

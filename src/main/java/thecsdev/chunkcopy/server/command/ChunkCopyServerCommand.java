@@ -2,156 +2,75 @@ package thecsdev.chunkcopy.server.command;
 
 import java.util.ArrayList;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.server.permissions.Permissions;
 import thecsdev.chunkcopy.api.AutoChunkCopy;
 import thecsdev.chunkcopy.api.AutoChunkCopy.ACCMode;
 import thecsdev.chunkcopy.api.ChunkCopyAPI;
 import thecsdev.chunkcopy.api.ChunkCopyUtils;
 import thecsdev.chunkcopy.command.ChunkCopyCommand;
 
-public final class ChunkCopyServerCommand extends ChunkCopyCommand<ServerCommandSource>
+public final class ChunkCopyServerCommand extends ChunkCopyCommand<CommandSourceStack>
 {
-	// ==================================================
-	@Override
-	public String getCommandName() { return "chunkcopysrv"; }
-	// --------------------------------------------------
-	@Override
-	protected boolean canChunkCopy(ServerCommandSource cs) { return cs.hasPermissionLevel(4); }
-	// --------------------------------------------------
-	@Override
-	protected boolean canCopy(ServerCommandSource cs) { return isOpAndHuman(cs); }
-	// --------------------------------------------------
-	@Override
-	protected boolean canPaste(ServerCommandSource cs) { return isOpAndHuman(cs); }
-	// --------------------------------------------------
-	@Override
-	protected boolean canConfig(ServerCommandSource cs) { return cs.hasPermissionLevel(4); }
-	// ==================================================
-	protected void execMain(ServerCommandSource cs)
+	@Override public String getCommandName() { return "chunkcopysrv"; }
+	@Override protected boolean canChunkCopy(CommandSourceStack cs) { return cs.permissions().hasPermission(Permissions.COMMANDS_OWNER); }
+	@Override protected boolean canCopy(CommandSourceStack cs) { return isOpAndHuman(cs); }
+	@Override protected boolean canPaste(CommandSourceStack cs) { return isOpAndHuman(cs); }
+	@Override protected boolean canConfig(CommandSourceStack cs) { return cs.permissions().hasPermission(Permissions.COMMANDS_OWNER); }
+
+	@Override protected void execMain(CommandSourceStack cs)
+	{ cs.sendSuccess(() -> Component.literal("[Chunk Copy] Only operator players can execute this command."), false); }
+
+	@Override protected void copy(CommandSourceStack commandSource, String fileName, int chunkDistance)
 	{
-		String feedback  = "[Chunk Copy] Only operator players can execute this command so "
-				+ "that the mod can know where you wish to copy/paste chunks.";
-		cs.sendFeedback(Text.literal(feedback), false);
-	}
-	// --------------------------------------------------
-	@Override
-	protected void copy(ServerCommandSource commandSource, String fileName, int chunkDistance)
-	{
-		try
-		{
-			//obtain chunks
-			ServerWorld world = commandSource.getWorld();
-			ChunkPos chunkPos = commandSource.getPlayer().getChunkPos();
+		try {
+			ServerLevel world = commandSource.getLevel();
+			ChunkPos chunkPos = commandSource.getPlayer().chunkPosition();
 			ArrayList<ChunkPos> loadedChunks = ChunkCopyUtils.getNearbyLoadedChunks(world, chunkPos, chunkDistance);
-			
-			//copy chunks
 			int affectedChunks = 0;
-			for (ChunkPos cp : loadedChunks)
-			{
-				ChunkCopyAPI.saveChunkDataIO(world, cp, fileName);
-				affectedChunks++;
-			}
-			
-			//send feedback
-			String feedback = String.format("[Chunk Copy] Copied %d chunks to '%s'.", affectedChunks, fileName);
-			commandSource.sendFeedback(Text.literal(feedback), true);
-		}
-		catch (Exception e) { handleException(commandSource, e); return; }
+			for (ChunkPos cp : loadedChunks) { ChunkCopyAPI.saveChunkDataIO(world, cp, fileName); affectedChunks++; }
+			commandSource.sendSuccess(() -> Component.literal(String.format("[Chunk Copy] Copied %d chunks to '%s'.", affectedChunks, fileName)), true);
+		} catch (Exception e) { handleException(commandSource, e); }
 	}
-	// --------------------------------------------------
-	@Override
-	protected void paste(ServerCommandSource commandSource, String fileName, int chunkDistance)
+
+	@Override protected void paste(CommandSourceStack commandSource, String fileName, int chunkDistance)
 	{
-		//check if file exists
 		if(!ChunkCopyAPI.getSaveFileDirectory(fileName).exists())
-		{
-			String feedback = String.format("[Chunk Copy] Unable to paste chunks from '%s', file not found.", fileName);
-			commandSource.sendFeedback(Text.literal(feedback), true);
-			return;
-		}
-		
-		try
-		{
-			//obtain chunks
-			ServerWorld world = commandSource.getWorld();
-			ChunkPos chunkPos = commandSource.getPlayer().getChunkPos();
+		{ commandSource.sendSuccess(() -> Component.literal(String.format("[Chunk Copy] Unable to paste chunks from '%s', file not found.", fileName)), true); return; }
+		try {
+			ServerLevel world = commandSource.getLevel();
+			ChunkPos chunkPos = commandSource.getPlayer().chunkPosition();
 			ArrayList<ChunkPos> loadedChunks = ChunkCopyUtils.getNearbyLoadedChunks(world, chunkPos, chunkDistance);
-			
-			//paste chunks
 			int affectedChunks = 0;
-			for (ChunkPos cp : loadedChunks)
-			{
-				if(ChunkCopyAPI.loadChunkDataIO(world, cp, fileName))
-					affectedChunks++;
-			}
-			
-			//send feedback
-			String feedback = String.format("[Chunk Copy] Pasted %d chunks from '%s'.", affectedChunks, fileName);
-			commandSource.sendFeedback(Text.literal(feedback), true);
-		}
-		catch (Exception e) { handleException(commandSource, e); return; }
+			for (ChunkPos cp : loadedChunks) { if(ChunkCopyAPI.loadChunkDataIO(world, cp, fileName)) affectedChunks++; }
+			commandSource.sendSuccess(() -> Component.literal(String.format("[Chunk Copy] Pasted %d chunks from '%s'.", affectedChunks, fileName)), true);
+		} catch (Exception e) { handleException(commandSource, e); }
 	}
-	// --------------------------------------------------
-	@Override
-	protected void fill(ServerCommandSource commandSource, int chunkDistance, BlockState block)
+
+	@Override protected void fill(CommandSourceStack commandSource, int chunkDistance, BlockState block)
 	{
-		try
-		{
-			//obtain chunks
-			ServerWorld world = commandSource.getWorld();
-			ChunkPos chunkPos = commandSource.getPlayer().getChunkPos();
+		try {
+			ServerLevel world = commandSource.getLevel();
+			ChunkPos chunkPos = commandSource.getPlayer().chunkPosition();
 			ArrayList<ChunkPos> loadedChunks = ChunkCopyUtils.getNearbyLoadedChunks(world, chunkPos, chunkDistance);
-			
-			//fill chunks
 			int affectedChunks = 0;
-			for (ChunkPos cp : loadedChunks)
-			{
-				ChunkCopyAPI.fillChunkBlocks(world, cp, block);
-				affectedChunks++;
-			}
-			
-			//send feedback
+			for (ChunkPos cp : loadedChunks) { ChunkCopyAPI.fillChunkBlocks(world, cp, block); affectedChunks++; }
 			String bn = block.getBlock().getName().getString();
-			String feedback = String.format("[Chunk Copy] Filled %d chunks with '%s'.", affectedChunks, bn);
-			commandSource.sendFeedback(Text.literal(feedback), true);
-		}
-		catch (Exception e) { handleException(commandSource, e); return; }
+			commandSource.sendSuccess(() -> Component.literal(String.format("[Chunk Copy] Filled %d chunks with '%s'.", affectedChunks, bn)), true);
+		} catch (Exception e) { handleException(commandSource, e); }
 	}
-	// --------------------------------------------------
-	@Override
-	protected void autoChunkCopyStart(ServerCommandSource commandSource, String fileName, ACCMode accMode)
-	{
-		autoChunkCopyStop(commandSource);
-	}
-	
-	@Override
-	protected void autoChunkCopyStop(ServerCommandSource commandSource)
-	{
-		//send feedback
-		String feedback = "[Chunk Copy] AutoChunkCopy is not available server-side.";
-		commandSource.sendFeedback(Text.literal(feedback), false);
-		AutoChunkCopy.stop();
-	}
-	// ==================================================
-	private static boolean isOpAndHuman(ServerCommandSource src)
-	{
-		try { return src.getPlayer().hasPermissionLevel(4); }
-		catch (Exception e) { return false; }
-	}
-	// --------------------------------------------------
-	/**
-	 * Sends exception feedback.
-	 */
-	private void handleException(ServerCommandSource source, Exception e)
-	{
-		String feedback = String.format(
-				"[Chunk Copy] An exception was thrown while executing the command: %s",
-				"\n" + getExceptionMessage(e));
-		source.sendFeedback(Text.literal(feedback), true);
-	}
-	// ==================================================
+
+	@Override protected void autoChunkCopyStart(CommandSourceStack commandSource, String fileName, ACCMode accMode) { autoChunkCopyStop(commandSource); }
+	@Override protected void autoChunkCopyStop(CommandSourceStack commandSource)
+	{ commandSource.sendSuccess(() -> Component.literal("[Chunk Copy] AutoChunkCopy is not available server-side."), false); AutoChunkCopy.stop(); }
+
+	private static boolean isOpAndHuman(CommandSourceStack src)
+	{ try { return src.getPlayer() != null && src.permissions().hasPermission(Permissions.COMMANDS_OWNER); } catch (Exception e) { return false; } }
+
+	private void handleException(CommandSourceStack source, Exception e)
+	{ source.sendSuccess(() -> Component.literal("[Chunk Copy] An exception was thrown while executing the command: " + "\n" + getExceptionMessage(e)), true); }
 }

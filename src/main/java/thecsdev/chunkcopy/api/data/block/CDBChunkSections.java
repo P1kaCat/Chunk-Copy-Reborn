@@ -9,105 +9,82 @@ import java.util.ArrayList;
 
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkSection;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import thecsdev.chunkcopy.ChunkCopy;
 import thecsdev.chunkcopy.api.data.ChunkDataBlock;
 import thecsdev.chunkcopy.api.data.ChunkDataBlockID;
 import thecsdev.chunkcopy.api.io.IOUtils;
 import thecsdev.chunkcopy.api.io.Tuple;
 
-/**
- * A {@link ChunkDataBlock} that contains information about world {@link ChunkSection}s.
- */
 @ChunkDataBlockID(namespace = ChunkCopy.ModID, path = "chunk_sections")
 public class CDBChunkSections extends ChunkDataBlock
 {
-	// ==================================================
-	/**
-	 * Stores {@link ChunkSection} data. The {@link Integer} is
-	 * {@link ChunkSection#getYOffset()}, and the {@link PacketByteBuf}
-	 * is the {@link ChunkSection} data.
-	 */
-	public final ArrayList<Tuple<Integer, PacketByteBuf>> ChunkSectionData = new ArrayList<Tuple<Integer, PacketByteBuf>>();
-	// ==================================================
+	public final ArrayList<Tuple<Integer, FriendlyByteBuf>> ChunkSectionData = new ArrayList<>();
+
 	@Override
-	public void copyData(World world, ChunkPos chunkPos)
+	public void copyData(Level world, ChunkPos chunkPos)
 	{
-		//clear old data
 		ChunkSectionData.clear();
-		
-		Chunk chunk = world.getChunk(chunkPos.x, chunkPos.z);
-		for (ChunkSection chunkSection : chunk.getSectionArray())
+		ChunkAccess chunk = world.getChunk(chunkPos.x, chunkPos.z);
+		LevelChunkSection[] sections = chunk.getSections();
+		for (int i = 0; i < sections.length; i++)
 		{
-			PacketByteBuf pbb = PacketByteBufs.create();
-			chunkSection.toPacket(pbb);
-			ChunkSectionData.add(new Tuple<Integer, PacketByteBuf>(chunkSection.getYOffset(), pbb));
+			FriendlyByteBuf pbb = PacketByteBufs.create();
+			sections[i].write(pbb);
+			int yOffset = chunk.getMinY() + (i * 16);
+			ChunkSectionData.add(new Tuple<>(yOffset, pbb));
 		}
 	}
-	// --------------------------------------------------
+
 	@Override
-	public void pasteData(ServerWorld world, ChunkPos chunkPos)
+	public void pasteData(ServerLevel world, ChunkPos chunkPos)
 	{
-		Chunk chunk = world.getChunk(chunkPos.x, chunkPos.z);
-		for (Tuple<Integer, PacketByteBuf> pbb : ChunkSectionData)
+		ChunkAccess chunk = world.getChunk(chunkPos.x, chunkPos.z);
+		for (Tuple<Integer, FriendlyByteBuf> pbb : ChunkSectionData)
 		{
-			ChunkSection cs = chunk.getSection(chunk.getSectionIndex(pbb.Item1));
-			cs.fromPacket(pbb.Item2);
+			LevelChunkSection cs = chunk.getSection(chunk.getSectionIndex(pbb.Item1));
+			cs.read(pbb.Item2);
 		}
-		chunk.setNeedsSaving(true);
+		chunk.markUnsaved();
 	}
-	// --------------------------------------------------
+
 	@Override
-	public void updateClients(ServerWorld world, ChunkPos chunkPos)
-	{
-		//use CDBBlocksLegacy's method of updating clients
-		new CDBBlocksLegacy().updateClients(world, chunkPos);
-	}
-	// ==================================================
+	public void updateClients(ServerLevel world, ChunkPos chunkPos)
+	{ new CDBBlocksLegacy().updateClients(world, chunkPos); }
+
 	@Override
 	public void readData(InputStream stream) throws IOException
 	{
-		//clear old data
 		ChunkSectionData.clear();
-		
-		//keep reading until there is nothing left to read
 		while(stream.available() > 0)
 		{
 			int len = IOUtils.readVarInt(stream);
 			byte[] pbbBytes = stream.readNBytes(len);
-			
 			ByteArrayInputStream pbbStream = new ByteArrayInputStream(pbbBytes);
 			int offsetY = IOUtils.readVarInt(pbbStream);
-			PacketByteBuf pbb = PacketByteBufs.copy(Unpooled.copiedBuffer(IOUtils.readByteArray(pbbStream)));
+			FriendlyByteBuf pbb = PacketByteBufs.copy(Unpooled.copiedBuffer(IOUtils.readByteArray(pbbStream)));
 			pbbStream.close();
-			
-			ChunkSectionData.add(new Tuple<Integer, PacketByteBuf>(offsetY, pbb));
+			ChunkSectionData.add(new Tuple<>(offsetY, pbb));
 		}
 	}
-	// --------------------------------------------------
+
 	@Override
 	public void writeData(OutputStream stream) throws IOException
 	{
-		//iterate all chunk sections
-		for (Tuple<Integer, PacketByteBuf> pbb : ChunkSectionData)
+		for (Tuple<Integer, FriendlyByteBuf> pbb : ChunkSectionData)
 		{
-			//handle a separate stream for each tuple
 			ByteArrayOutputStream pbbStream = new ByteArrayOutputStream();
-			byte[] pbbCsBytes = pbb.Item2.getWrittenBytes();
-			
+			byte[] pbbCsBytes = new byte[pbb.Item2.readableBytes()];
+			pbb.Item2.readBytes(pbbCsBytes);
 			IOUtils.writeVarInt(pbbStream, pbb.Item1);
 			IOUtils.writeByteArray(pbbStream, pbbCsBytes);
-			
-			//write each stream
-			byte[] pbbBytes = pbbStream.toByteArray();
-			IOUtils.writeByteArray(stream, pbbBytes);
+			IOUtils.writeByteArray(stream, pbbStream.toByteArray());
 			pbbStream.close();
 		}
 	}
-	// ==================================================
 }

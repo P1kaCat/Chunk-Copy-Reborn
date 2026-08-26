@@ -6,35 +6,27 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.LevelChunk;
 import thecsdev.chunkcopy.api.AutoChunkCopy;
 import thecsdev.chunkcopy.api.ChunkCopyAPI;
 
-@Mixin(targets = "net/minecraft/client/world/ClientChunkManager$ClientChunkMap")
+@Mixin(targets = "net/minecraft/client/multiplayer/ClientChunkCache$Storage")
 public abstract class ClientChunkMapMixin
 {
-	// ==================================================
 	@Inject(method = "set", at = @At("TAIL"))
-	protected void set(int index, @Nullable WorldChunk chunk, CallbackInfo callback)
+	protected void set(int index, @Nullable LevelChunk chunk, CallbackInfo callback)
 	{
-		//check if auto-copy is running
 		if(!AutoChunkCopy.isRunning()) return;
-		
-		//ignore null chunks
 		if(chunk == null) return;
-		
-		//save chunk
 		try
 		{
-			World world = (World) chunk.getWorld();
+			Level world = (Level) chunk.getLevel();
 			ChunkPos chunkPos = chunk.getPos();
 			String fileName = AutoChunkCopy.getFileName();
-			
 			ChunkCopyAPI.saveChunkDataIO(world, chunkPos, fileName);
 		}
 		catch (Throwable e) {}
 	}
-	// ==================================================
 }
