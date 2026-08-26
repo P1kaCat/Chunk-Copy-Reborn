@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 
 import io.netty.buffer.Unpooled;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -30,11 +29,11 @@ public class CDBChunkSections extends ChunkDataBlock
 	public void copyData(Level world, ChunkPos chunkPos)
 	{
 		ChunkSectionData.clear();
-		ChunkAccess chunk = world.getChunk(chunkPos.x, chunkPos.z);
+		ChunkAccess chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
 		LevelChunkSection[] sections = chunk.getSections();
 		for (int i = 0; i < sections.length; i++)
 		{
-			FriendlyByteBuf pbb = PacketByteBufs.create();
+			FriendlyByteBuf pbb = new FriendlyByteBuf(Unpooled.buffer());
 			sections[i].write(pbb);
 			int yOffset = chunk.getMinY() + (i * 16);
 			ChunkSectionData.add(new Tuple<>(yOffset, pbb));
@@ -44,7 +43,7 @@ public class CDBChunkSections extends ChunkDataBlock
 	@Override
 	public void pasteData(ServerLevel world, ChunkPos chunkPos)
 	{
-		ChunkAccess chunk = world.getChunk(chunkPos.x, chunkPos.z);
+		ChunkAccess chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
 		for (Tuple<Integer, FriendlyByteBuf> pbb : ChunkSectionData)
 		{
 			LevelChunkSection cs = chunk.getSection(chunk.getSectionIndex(pbb.Item1));
@@ -67,7 +66,7 @@ public class CDBChunkSections extends ChunkDataBlock
 			byte[] pbbBytes = stream.readNBytes(len);
 			ByteArrayInputStream pbbStream = new ByteArrayInputStream(pbbBytes);
 			int offsetY = IOUtils.readVarInt(pbbStream);
-			FriendlyByteBuf pbb = PacketByteBufs.copy(Unpooled.copiedBuffer(IOUtils.readByteArray(pbbStream)));
+			FriendlyByteBuf pbb = new FriendlyByteBuf(Unpooled.copiedBuffer(IOUtils.readByteArray(pbbStream)));
 			pbbStream.close();
 			ChunkSectionData.add(new Tuple<>(offsetY, pbb));
 		}
@@ -80,7 +79,7 @@ public class CDBChunkSections extends ChunkDataBlock
 		{
 			ByteArrayOutputStream pbbStream = new ByteArrayOutputStream();
 			byte[] pbbCsBytes = new byte[pbb.Item2.readableBytes()];
-			pbb.Item2.readBytes(pbbCsBytes);
+			pbb.Item2.getBytes(pbb.Item2.readerIndex(), pbbCsBytes);
 			IOUtils.writeVarInt(pbbStream, pbb.Item1);
 			IOUtils.writeByteArray(pbbStream, pbbCsBytes);
 			IOUtils.writeByteArray(stream, pbbStream.toByteArray());
