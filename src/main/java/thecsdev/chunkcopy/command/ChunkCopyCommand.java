@@ -25,11 +25,30 @@ public abstract class ChunkCopyCommand<CS extends SharedSuggestionProvider>
 
 	public void register(CommandDispatcher<CS> dispatcher, CommandBuildContext cra)
 	{
-		dispatcher.register(literal(getCommandName()).requires(cs -> canChunkCopy(cs)).executes(arg -> exec(arg))
-			.then(literal("copy").requires(arg -> canCopy(arg)).then(argument("fileName", CopiedChunksArgumentType.forCopying()).executes(arg -> exec_copy_fileName(arg)).then(argument("chunkDistance", ChunkDistArg).executes(arg -> exec_copy_fileName_chunkDistance(arg)))))
-			.then(literal("paste").requires(arg -> canPaste(arg)).then(argument("fileName", CopiedChunksArgumentType.forPasting()).executes(arg -> exec_paste_fileName(arg)).then(argument("chunkDistance", ChunkDistArg).executes(arg -> exec_paste_fileName_chunkDistance(arg)))))
-			.then(literal("fill").requires(arg -> canPaste(arg)).then(argument("chunkDistance", ChunkDistArg).then(argument("blockState", BlockStateArgument.block(cra)).executes(arg -> exec_fill_chunkDistance_block(arg)))))
-			.then(literal("clear").requires(arg -> canPaste(arg)).then(argument("chunkDistance", ChunkDistArg).executes(arg -> exec_clear_chunkDistance(arg))))
+		LiteralArgumentBuilder<CS> command = literal(getCommandName())
+			.requires(cs -> canChunkCopy(cs))
+			.executes(arg -> exec(arg))
+			.then(literal("copy")
+				.requires(arg -> canCopy(arg))
+				.then(argument("fileName", CopiedChunksArgumentType.forCopying())
+					.executes(arg -> exec_copy_fileName(arg))
+					.then(argument("chunkDistance", ChunkDistArg)
+						.executes(arg -> exec_copy_fileName_chunkDistance(arg)))))
+			.then(literal("paste")
+				.requires(arg -> canPaste(arg))
+				.then(argument("fileName", CopiedChunksArgumentType.forPasting())
+					.executes(arg -> exec_paste_fileName(arg))
+					.then(argument("chunkDistance", ChunkDistArg)
+						.executes(arg -> exec_paste_fileName_chunkDistance(arg)))))
+			.then(literal("fill")
+				.requires(arg -> canPaste(arg))
+				.then(argument("chunkDistance", ChunkDistArg)
+					.then(argument("blockState", BlockStateArgument.block(cra))
+						.executes(arg -> exec_fill_chunkDistance_block(arg)))))
+			.then(literal("clear")
+				.requires(arg -> canPaste(arg))
+				.then(argument("chunkDistance", ChunkDistArg)
+					.executes(arg -> exec_clear_chunkDistance(arg))))
 			.then(literal("auto")
 				.requires(arg -> AutoChunkCopy.validate())
 				.then(literal("copy")
@@ -42,6 +61,8 @@ public abstract class ChunkCopyCommand<CS extends SharedSuggestionProvider>
 						.executes(arg -> exec_autoChunkCopy_start_fileName(arg, ACCMode.Pasting))))
 				.then(literal("stop")
 					.executes(arg -> exec_autoChunkCopy_stop(arg))));
+
+		dispatcher.register(command);
 	}
 
 	private int exec(CommandContext<CS> cs) { execMain(cs.getSource()); return 1; }
