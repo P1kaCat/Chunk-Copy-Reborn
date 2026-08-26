@@ -6,6 +6,6 @@ import net.minecraft.network.chat.Component;
 public final class CCConfigScreen extends Screen
 {
 	protected CCConfigScreen() { super(Component.translatable("chunkcopy.title")); }
-	@Override public boolean shouldPause() { return true; }
+	@Override public boolean isPauseScreen() { return true; }
 	@Override public boolean shouldCloseOnEsc() { return true; }
 }
