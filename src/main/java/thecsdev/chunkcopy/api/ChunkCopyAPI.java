@@ -51,13 +51,13 @@ public final class ChunkCopyAPI
 		}
 		String a = getSaveFileDirectory(fileName).getAbsolutePath() + "/";
 		String b = worldIdNamespace + "/" + worldIdPath + "/";
-		String c = chunkPos.getX() + "_" + chunkPos.getZ() + FILE_EXTENSION;
+		String c = chunkPos.x() + "_" + chunkPos.z() + FILE_EXTENSION;
 		return new File(a + b + c);
 	}
 
 	public static void saveChunkDataIO(Level world, ChunkPos chunkPos, String fileName) throws IOException
 	{
-		LevelChunk chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
+		LevelChunk chunk = world.getChunk(chunkPos.x(), chunkPos.z());
 		if(chunk == null || (chunk instanceof EmptyLevelChunk)) return;
 		File file = getChunkSaveFile(world, chunkPos, fileName);
 		file.getParentFile().mkdirs();
