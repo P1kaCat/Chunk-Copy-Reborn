@@ -34,7 +34,7 @@ public class CDBEntityBlocksLegacy extends ChunkDataBlock
 	@Override public void copyData(Level world, ChunkPos chunkPos)
 	{
 		BlockEntities.clear();
-		LevelChunk chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
+		LevelChunk chunk = world.getChunk(chunkPos.x(), chunkPos.z());
 		for (BlockPos eBlockPos : chunk.getBlockEntitiesPos())
 		{
 			BlockState eBlockState = chunk.getBlockState(eBlockPos);
@@ -49,7 +49,7 @@ public class CDBEntityBlocksLegacy extends ChunkDataBlock
 
 	@Override public void pasteData(ServerLevel world, ChunkPos chunkPos)
 	{
-		LevelChunk chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
+		LevelChunk chunk = world.getChunk(chunkPos.x(), chunkPos.z());
 		for (CDBEntityBlock cdbBlock : BlockEntities)
 		{
 			BlockPos pos = new BlockPos(cdbBlock.x, cdbBlock.y, cdbBlock.z);
