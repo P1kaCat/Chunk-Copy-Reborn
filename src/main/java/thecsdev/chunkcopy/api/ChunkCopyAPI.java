@@ -46,18 +46,18 @@ public final class ChunkCopyAPI
 		}
 		else
 		{
-			worldIdNamespace = world.dimension().location().getNamespace();
-			worldIdPath = world.dimension().location().getPath();
+			worldIdNamespace = world.dimension().identifier().getNamespace();
+			worldIdPath = world.dimension().identifier().getPath();
 		}
 		String a = getSaveFileDirectory(fileName).getAbsolutePath() + "/";
 		String b = worldIdNamespace + "/" + worldIdPath + "/";
-		String c = chunkPos.x + "_" + chunkPos.z + FILE_EXTENSION;
+		String c = chunkPos.getX() + "_" + chunkPos.getZ() + FILE_EXTENSION;
 		return new File(a + b + c);
 	}
 
 	public static void saveChunkDataIO(Level world, ChunkPos chunkPos, String fileName) throws IOException
 	{
-		LevelChunk chunk = world.getChunk(chunkPos.x, chunkPos.z);
+		LevelChunk chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
 		if(chunk == null || (chunk instanceof EmptyLevelChunk)) return;
 		File file = getChunkSaveFile(world, chunkPos, fileName);
 		file.getParentFile().mkdirs();
@@ -69,7 +69,7 @@ public final class ChunkCopyAPI
 	{
 		File file = getChunkSaveFile(world, chunkPos, fileName);
 		if(!file.exists()) return false;
-		byte[] chunkData = FileUtils.readFileToByteArray(getChunkSaveFile(world, chunkPos, fileName));
+		byte[] chunkData = FileUtils.readFileToByteArray(file);
 		pasteChunkData(chunkData, world, chunkPos, true);
 		return true;
 	}
