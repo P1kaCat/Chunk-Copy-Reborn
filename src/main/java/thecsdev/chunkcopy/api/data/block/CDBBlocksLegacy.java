@@ -29,7 +29,7 @@ public class CDBBlocksLegacy extends ChunkDataBlock
 
 	@Deprecated(forRemoval = true, since = "v2.0.0") @Override public void copyData(Level world, ChunkPos chunkPos)
 	{
-		LevelChunk chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
+		LevelChunk chunk = world.getChunk(chunkPos.x(), chunkPos.z());
 		int chunkWidthX = Math.abs(chunkPos.getMaxBlockX() - chunkPos.getMinBlockX());
 		int chunkWidthZ = Math.abs(chunkPos.getMaxBlockZ() - chunkPos.getMinBlockZ());
 		StartY = chunk.getMinY(); BlockIDs.clear(); int x = 0, y = chunk.getMinY(), z = 0;
@@ -42,7 +42,7 @@ public class CDBBlocksLegacy extends ChunkDataBlock
 
 	@Deprecated(forRemoval = true, since = "v2.0.0") @Override public void pasteData(ServerLevel world, ChunkPos chunkPos)
 	{
-		LevelChunk chunk = world.getChunk(chunkPos.getX(), chunkPos.getZ());
+		LevelChunk chunk = world.getChunk(chunkPos.x(), chunkPos.z());
 		int chunkWidthX = Math.abs(chunkPos.getMaxBlockX() - chunkPos.getMinBlockX());
 		int chunkWidthZ = Math.abs(chunkPos.getMaxBlockZ() - chunkPos.getMinBlockZ());
 		int x = 0, y = StartY, z = 0;
@@ -63,7 +63,7 @@ public class CDBBlocksLegacy extends ChunkDataBlock
 
 	private static ClientboundLevelChunkWithLightPacket makeMeAChunkDataPacketPls(Level world, ChunkPos chunkPos)
 	{
-		LevelChunk wchunk = world.getChunk(chunkPos.getX(), chunkPos.getZ()); LevelLightEngine lp = world.getLightEngine();
+		LevelChunk wchunk = world.getChunk(chunkPos.x(), chunkPos.z()); LevelLightEngine lp = world.getLightEngine();
 		return new ClientboundLevelChunkWithLightPacket(wchunk, lp, new BitSet(), new BitSet());
 	}
 }
