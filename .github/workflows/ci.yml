@@ -1,0 +1,118 @@
+name: CI Build
+
+on:
+  push:
+    branches: [fabric-26.2, main]
+  pull_request:
+    branches: [fabric-26.2, main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (Java ${{ matrix.java }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [25]
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: temurin
+
+      - name: 📦 Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle
+          key: gradle-${{ runner.os }}-java${{ matrix.java }}-${{ hashFiles('**/*.gradle*', '**/gradle.properties', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-java${{ matrix.java }}-
+            gradle-${{ runner.os }}-
+
+      - name: 🔨 Build with Gradle
+        run: ./gradlew build --no-daemon --stacktrace
+
+      - name: 📋 List build outputs
+        run: |
+          echo "## Build Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          find build/libs -type f -name "*.jar" -exec sh -c 'f="$1"; echo "| $(basename "$f") | $(du -h "$f" | cut -f1) |" >> $GITHUB_STEP_SUMMARY' _ {} \;
+
+      - name: 📤 Upload JAR artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: chunkcopy-jars-java${{ matrix.java }}
+          path: build/libs/*.jar
+          if-no-files-found: error
+          retention-days: 14
+
+  validate:
+    name: Validate (lint & fabric.mod.json)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: 25
+          distribution: temurin
+
+      - name: 📦 Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            .gradle
+          key: gradle-${{ runner.os }}-java25-validate-${{ hashFiles('**/*.gradle*', '**/gradle.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-java25-
+
+      - name: 🔍 Validate fabric.mod.json
+        run: |
+          echo "Validating fabric.mod.json..."
+          if [ ! -f src/main/resources/fabric.mod.json ]; then
+            echo "::error::fabric.mod.json not found!"
+            exit 1
+          fi
+          # Check required fields
+          for field in id name version environment entrypoints; do
+            if ! grep -q "\"$field\"" src/main/resources/fabric.mod.json; then
+              echo "::error::Missing required field: $field"
+              exit 1
+            fi
+          done
+          echo "✅ fabric.mod.json is valid"
+
+      - name: 🔍 Validate mixin configs
+        run: |
+          for f in src/main/resources/chunkcopy.mixins.json src/main/resources/chunkcopy.client.mixins.json; do
+            if [ ! -f "$f" ]; then
+              echo "::error::Missing $f"
+              exit 1
+            fi
+            if ! grep -q '"compatibilityLevel"' "$f"; then
+              echo "::error::Missing compatibilityLevel in $f"
+              exit 1
+            fi
+            echo "✅ $f is valid"
+          done
+
+      - name: ✅ Compile sources JAR
+        run: ./gradlew compileJava --no-daemon --stacktrace

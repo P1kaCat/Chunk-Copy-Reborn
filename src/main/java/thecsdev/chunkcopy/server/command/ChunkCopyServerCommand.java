@@ -31,9 +31,10 @@ public final class ChunkCopyServerCommand extends ChunkCopyCommand<CommandSource
 			ServerLevel world = commandSource.getLevel();
 			ChunkPos chunkPos = commandSource.getPlayer().chunkPosition();
 			ArrayList<ChunkPos> loadedChunks = ChunkCopyUtils.getNearbyLoadedChunks(world, chunkPos, chunkDistance);
-			int affectedChunks = 0;
-			for (ChunkPos cp : loadedChunks) { ChunkCopyAPI.saveChunkDataIO(world, cp, fileName); affectedChunks++; }
-			commandSource.sendSuccess(() -> Component.literal(String.format("[Chunk Copy] Copied %d chunks to '%s'.", affectedChunks, fileName)), true);
+			for (ChunkPos cp : loadedChunks) { ChunkCopyAPI.saveChunkDataIO(world, cp, fileName); }
+			final int affectedChunks = loadedChunks.size();
+			final String msg = String.format("[Chunk Copy] Copied %d chunks to '%s'.", affectedChunks, fileName);
+			commandSource.sendSuccess(() -> Component.literal(msg), true);
 		} catch (Exception e) { handleException(commandSource, e); }
 	}
 
@@ -47,7 +48,9 @@ public final class ChunkCopyServerCommand extends ChunkCopyCommand<CommandSource
 			ArrayList<ChunkPos> loadedChunks = ChunkCopyUtils.getNearbyLoadedChunks(world, chunkPos, chunkDistance);
 			int affectedChunks = 0;
 			for (ChunkPos cp : loadedChunks) { if(ChunkCopyAPI.loadChunkDataIO(world, cp, fileName)) affectedChunks++; }
-			commandSource.sendSuccess(() -> Component.literal(String.format("[Chunk Copy] Pasted %d chunks from '%s'.", affectedChunks, fileName)), true);
+			final int finalCount = affectedChunks;
+			final String msg = String.format("[Chunk Copy] Pasted %d chunks from '%s'.", finalCount, fileName);
+			commandSource.sendSuccess(() -> Component.literal(msg), true);
 		} catch (Exception e) { handleException(commandSource, e); }
 	}
 
@@ -57,10 +60,11 @@ public final class ChunkCopyServerCommand extends ChunkCopyCommand<CommandSource
 			ServerLevel world = commandSource.getLevel();
 			ChunkPos chunkPos = commandSource.getPlayer().chunkPosition();
 			ArrayList<ChunkPos> loadedChunks = ChunkCopyUtils.getNearbyLoadedChunks(world, chunkPos, chunkDistance);
-			int affectedChunks = 0;
-			for (ChunkPos cp : loadedChunks) { ChunkCopyAPI.fillChunkBlocks(world, cp, block); affectedChunks++; }
-			String bn = block.getBlock().getName().getString();
-			commandSource.sendSuccess(() -> Component.literal(String.format("[Chunk Copy] Filled %d chunks with '%s'.", affectedChunks, bn)), true);
+			for (ChunkPos cp : loadedChunks) { ChunkCopyAPI.fillChunkBlocks(world, cp, block); }
+			final int affectedChunks = loadedChunks.size();
+			final String bn = block.getBlock().getName().getString();
+			final String msg = String.format("[Chunk Copy] Filled %d chunks with '%s'.", affectedChunks, bn);
+			commandSource.sendSuccess(() -> Component.literal(msg), true);
 		} catch (Exception e) { handleException(commandSource, e); }
 	}
 
