@@ -10,7 +10,10 @@ java {
 	withSourcesJar()
 }
 
-archivesBaseName = project.archives_base_name
+base {
+	archivesName = project.archives_base_name
+}
+
 version = project.mod_version
 group = project.maven_group
 
@@ -31,7 +34,7 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 25
+	options.release = 25
 }
 
 jar {
